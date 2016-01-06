@@ -29,12 +29,17 @@ eval $(docker-machine env "alpine$any_host_")
 docker network create --driver overlay --subnet="$SUBNET" 'multihost'
 
 for h in $HOSTS; do
-	cmd_='for h in '"$IPS"'; do ping -q -c 1 $h >/dev/null; [ $? -eq 0 ] && echo $(hostname)": can ping $h";done'
-	eval $(docker-machine env "alpine$h")
-	docker run --rm --net='multihost' gliderlabs/alpine sh -c "$cmd_"
+	eval $(docker-machine env "alpine$h") && \
+	docker run -d --name "alpine$h" --net='multihost' gliderlabs/alpine sh -c 'sleep 60'
 done
 
-docker-machine stop $(docker-machine ls | grep zookeeper|awk '{print $1}')
-docker-machine rm -f $(docker-machine ls | grep zookeeper|awk '{print $1}')
-docker-machine stop $(docker-machine ls | grep alpine|awk '{print $1}')
-docker-machine rm -f $(docker-machine ls | grep alpine|awk '{print $1}')
+for h in $HOSTS; do
+	cmd_='for h in '"$IPS"'; do ping -q -c 1 $h >/dev/null; [ $? -eq 0 ] && echo $(hostname)": can ping $h";done'
+	eval $(docker-machine env "alpine$h") && \
+	docker exec "alpine$h" sh -c "$cmd_"
+done
+
+#docker-machine stop $(docker-machine ls | grep zookeeper|awk '{print $1}')
+#docker-machine rm -f $(docker-machine ls | grep zookeeper|awk '{print $1}')
+#docker-machine stop $(docker-machine ls | grep alpine|awk '{print $1}')
+#docker-machine rm -f $(docker-machine ls | grep alpine|awk '{print $1}')
