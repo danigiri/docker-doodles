@@ -3,7 +3,7 @@
 #[ -z "$ID" ] && export ID=001
 
 [ -z "$HOSTS" ] && HOSTS='2 3 4 5'
-[ -z "$IP_PREFIX" ] && IP_PREFIX='10.0.0.'
+[ -z "$IP_PREFIX" ] && IP_PREFIX='10.10.0.'
 [ -z "$SUBNET" ] && export SUBNET='10.10.0.0/29'
 
 IPS=''
