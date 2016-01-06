@@ -16,7 +16,7 @@ docker-machine create --driver vmwarefusion \
 docker $(docker-machine config zookeeper) run -d -p 8181:8181 -p 2181:2181 -p 2888:2888 -p 3888:3888 \
         -h zookeeper.local --name zookeeper.local -e HOSTNAME=zookeeper.local mbabineau/zookeeper-exhibitor:latest
         
-
+cluster_store="cluster-store=zk://$(docker-machine ip zookeeper):2181"
 for h in $HOSTS; do
 	docker-machine create --driver vmwarefusion \
 		--vmwarefusion-no-share --vmwarefusion-disk-size 2000 --vmwarefusion-memory-size 512 \
