@@ -1,0 +1,73 @@
+# DM UTILS - Utilities for docker machine
+
+#  Copyright 2016 Daniel Giribet <dani - calidos.cat>
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+#### CONSTANTS ####
+OK_=0
+ERR_PARAMS_=4
+
+
+
+#### ENV VARS ####
+
+DM_DRIVER_OPTS=${DRIVER_OPTS:-'--driver virtualbox --virtualbox-no-share --virtualbox-disk-size 2000 --virtualbox-memory 512'}
+DM_MEM_OPT=${DM_MEM_OPT:-'--virtualbox-memory 512'}
+DM_DISK_OPT=${DM_DISK_OPT:-'--virtualbox-disk-size 2000'}
+[ -z "$DM_SMALL_MEM"] && DM_SMALL_MEM=512
+[ -z "$DM_SMALL_DISK"] && DM_SMALL_DISK=1000
+
+
+[ -z "$DM_DM" ] && DM_='docker-machie
+
+
+####################################################################################################
+# Output message on STDERR <message>
+echoerr_() { printf %s\\n "$@" 1>&2; }
+
+####################################################################################################
+exitIfError_() {
+	if [ $1 -ne 0 ]; then
+		err_=$?
+		echoerr_ "**** Could not create small machine ($err_) ****"
+		exit $err_
+	fi
+}
+
+####################################################################################################
+# createSmallMachine <name>
+createSmallMachine() {
+	if [ $# -lt 1 ]; then
+		exit $ERR_PARAMS_
+	fi
+	name_="$1" && shift
+	createMachine "$name_" "$DM_SMALL_MEM" "$DM_SMALL_DISK" $@
+
+}
+
+
+####################################################################################################
+# createMachine <name> <mem> <disk> <otheropts>
+createMachine() {
+	if [ $# -lt 3 ]; then
+		exit $ERR_PARAMS_
+	fi
+	name_="$1" && shift
+	mem_="$1" && shift
+	disk_="$1" && shift
+	
+	$DM_DM create $DM_DRIVER_OPTS $DM_MEM_OPT "$mem_" $DM_DISK_OPT "$disk_" $@ "$name_"
+	exitIfError_ $? "**** ERROR $DM_DM create $DM_DRIVER_OPTS $DM_MEM_OPT '$mem_' $DM_DISK_OPT '$disk_' $@ '$name_' ($?) ****"
+
+}
