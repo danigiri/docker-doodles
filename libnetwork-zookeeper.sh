@@ -61,15 +61,15 @@ if [ -z "$SAME_HOST" ]; then
 	c=1
 	for h in $HOSTS; do
 		container_=$(echo "$CONTAINERS" | awk '{print $'$c'}')
-		echo "$HOST_$h[$container_]: ($cmd_)"
 		eval $(docker-machine env "$HOST_$h")
-		docker run -d --name "sleep$h" --net="$NETWORK" gliderlabs/alpine sh -c "$cmd_"
+		echo "$HOST_$h[sleep$container_]: run ($cmd_)"
+		docker run -d --name "sleep$container_" --net="$NETWORK" gliderlabs/alpine sh -c "$cmd_"
 		let "c++"
 	done
 else
 	eval $(docker-machine env "$HOST_$first_host_")
 	for c in $CONTAINERS; do
-		echo "$HOST_$first_host_[$c]: ($cmd_)"
+		echo "$HOST_$first_host_[sleep$c]: run($cmd_)"
 		docker run -d --name "sleep$c" --net="$NETWORK" gliderlabs/alpine sh -c "$cmd_"
 	done
 fi
@@ -79,16 +79,16 @@ if [ -z "$SAME_HOST" ]; then
 	c=1
 	for h in $HOSTS; do
 		container_=$(echo "$CONTAINERS" | awk '{print $'$c'}')
-		echo "$HOST_$h[$container_]: ($cmd_)"
+		echo "$HOST_$h[sleep$container_] exec: ($cmd_)"
 		eval $(docker-machine env "$HOST_$h")
-		docker exec "sleep$h" sh -c "$cmd_"
+		docker exec "sleep$container_" sh -c "$cmd_"
 		let "c++"		
 	done
 else
 	eval $(docker-machine env "$HOST_$first_host_")
 	for c in $CONTAINERS; do
-		echo "$HOST_$first_host_[$c]: ($cmd_)"
-		docker exec "sleep$first_host_" sh -c "$cmd_"
+		echo "$HOST_$first_host_[sleep$c]: ($cmd_)"
+		docker exec "sleep$c" sh -c "$cmd_"
 	done
 fi
 
@@ -97,6 +97,5 @@ exit 0
 # bash -c 'for h in '"$HOSTS"'; do eval $(docker-machine env "host$h") && docker stop $(docker ps -q); done'
 # bash -c 'for h in '"$HOSTS"'; do eval $(docker-machine env "host$h") && docker stop $(docker ps -q);docker rm $(docker ps -q); done'
 # bash -c 'for h in '"$HOSTS"'; do docker-machine rm -f "host$h"; done; docker-machine rm -f zookeeper'
-
 
 
