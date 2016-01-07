@@ -11,12 +11,19 @@ DRIVER_OPTS=${DRIVER_OPTS:-'--driver virtualbox --virtualbox-no-share --virtualb
 [ -z "$NETWORK" ] && NETWORK='multihost'
 [ -z "$SAME_HOST" ] && SAME_HOST=
 
-
 IPS=''
 for c in $CONTAINERS; do IPS="$IPS $IP_PREFIX$c"; done
 
 ZK_='zookeeper'
 HOST_='host'
+
+echo "Using hosts: $HOST_"'{'"$HOSTS"'}' 
+echo "Using containers: sleep"'{'"$CONTAINERS"'}' 
+echo "Using hosts: $IP_PREFIX"
+echo "Using hosts: $SUBNET" 
+echo "Using hosts: $NETWORK" 
+[ -z "$SAME_HOST" ] && echo "All containers in different hosts" 
+[ ! -z "$SAME_HOST" ] && echo "All containers in the same host" 
 
 echo '**** Creating zookeeper host ****'
 
@@ -51,12 +58,6 @@ docker network inspect "$NETWORK" | head -7
 printf %s '**** Running idle docker containers on hosts '
 cmd_='sleep 1000'
 if [ -z "$SAME_HOST" ]; then
-	eval $(docker-machine env "$HOST_$first_host_")
-	for c in $CONTAINERS; do
-		echo "$HOST_$first_host_[$c]: ($cmd_)"
-		docker run -d --name "sleep$c" --net="$NETWORK" gliderlabs/alpine sh -c "$cmd_"
-	done
-else
 	c=1
 	for h in $HOSTS; do
 		container_=$(echo "$CONTAINERS" | awk '{print $'$c'}')
@@ -65,29 +66,37 @@ else
 		docker run -d --name "sleep$h" --net="$NETWORK" gliderlabs/alpine sh -c "$cmd_"
 		let "c++"
 	done
-fi
-
-cmd_='for h in '"$IPS"'; do ping -q -c 1 $h >/dev/null;if [ $? -eq 0 ]; then echo $(hostname)": ping $h OK" else echo $(hostname)": ping $h KO($?)";fi;done'
-if [ -z "$SAME_HOST" ]; then
+else
+	eval $(docker-machine env "$HOST_$first_host_")
 	for c in $CONTAINERS; do
 		echo "$HOST_$first_host_[$c]: ($cmd_)"
-		docker exec "$HOST_$first_host_" sh -c "$cmd_"
+		docker run -d --name "sleep$c" --net="$NETWORK" gliderlabs/alpine sh -c "$cmd_"
 	done
-else
+fi
+
+cmd_='for h in '"$IPS"'; do echo $(hostname)": pinging $h... ";ping -q -c 1 $h >/dev/null;[ $? -eq 0 ] && echo "ping $h OK"; done'
+if [ -z "$SAME_HOST" ]; then
 	c=1
 	for h in $HOSTS; do
 		container_=$(echo "$CONTAINERS" | awk '{print $'$c'}')
 		echo "$HOST_$h[$container_]: ($cmd_)"
-		eval $(docker-machine env "$HOST_$first_host_")
-		docker exec "$HOST_$h" sh -c "$cmd_"
+		eval $(docker-machine env "$HOST_$h")
+		docker exec "sleep$h" sh -c "$cmd_"
+		let "c++"		
+	done
+else
+	eval $(docker-machine env "$HOST_$first_host_")
+	for c in $CONTAINERS; do
+		echo "$HOST_$first_host_[$c]: ($cmd_)"
+		docker exec "sleep$first_host_" sh -c "$cmd_"
 	done
 fi
 
 exit 0
 
-# bash -c 'for h in '"$HOSTS"'; do eval $(docker-machine env "alpine$h") && docker stop $(docker ps -q); done'
-# bash -c 'for h in '"$HOSTS"'; do eval $(docker-machine env "alpine$h") && docker rm "alpine$h"; done'
-# bash -c 'for h in '"$HOSTS"'; do docker-machine rm -f "alpine$h"; done; docker-machine rm -f zookeeper'
+# bash -c 'for h in '"$HOSTS"'; do eval $(docker-machine env "host$h") && docker stop $(docker ps -q); done'
+# bash -c 'for h in '"$HOSTS"'; do eval $(docker-machine env "host$h") && docker stop $(docker ps -q);docker rm $(docker ps -q); done'
+# bash -c 'for h in '"$HOSTS"'; do docker-machine rm -f "host$h"; done; docker-machine rm -f zookeeper'
 
 
 
