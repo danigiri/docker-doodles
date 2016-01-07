@@ -19,9 +19,9 @@ HOST_='host'
 
 echo "Using hosts: $HOST_"'{'"$HOSTS"'}' 
 echo "Using containers: sleep"'{'"$CONTAINERS"'}' 
-echo "Using hosts: $IP_PREFIX"
-echo "Using hosts: $SUBNET" 
-echo "Using hosts: $NETWORK" 
+echo "Using ip's: $IP_PREFIX"'{'"$HOSTS"'}' 
+echo "Using network named: $NETWORK" 
+echo "Using subnet: $SUBNET" 
 [ -z "$SAME_HOST" ] && echo "All containers in different hosts" 
 [ ! -z "$SAME_HOST" ] && echo "All containers in the same host" 
 
